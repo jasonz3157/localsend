@@ -55,6 +55,9 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
+          log-accepted-android-sdk-licenses: false
 
       - name: Install pinned Flutter SDK
         uses: subosito/flutter-action@v2
@@ -77,6 +80,7 @@ jobs:
           ANDROID_KEY_PROPERTIES: ${{ secrets.ANDROID_KEY_PROPERTIES }}
           ANDROID_KEY_STORE: ${{ secrets.ANDROID_KEY_STORE }}
         run: |
+          umask 077
           KEYSTORE_PATH="$RUNNER_TEMP/localsend-signing.jks"
           if [[ -n "$ANDROID_KEY_PROPERTIES" && -n "$ANDROID_KEY_STORE" ]]; then
             printf '%s' "$ANDROID_KEY_PROPERTIES" | base64 --decode > app/android/key.properties
@@ -102,6 +106,9 @@ jobs:
             echo "::warning::此 APK 使用临时测试签名, 无法覆盖官方版本或其他运行生成的 APK."
           fi
           echo "mode=$SIGNING_MODE" >> "$GITHUB_OUTPUT"
+
+      - name: Remove proprietary dependencies
+        run: sh support/scripts/remove_proprietary_dependencies.sh
 
       - name: Resolve Dart dependencies
         run: |
